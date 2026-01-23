@@ -4,6 +4,7 @@ import io.github.mishkis.orbital_railgun.OrbitalRailgun;
 import io.github.mishkis.orbital_railgun.client.rendering.OrbitalRailgunGuiShader;
 import io.github.mishkis.orbital_railgun.client.rendering.OrbitalRailgunShader;
 import io.github.mishkis.orbital_railgun.item.OrbitalRailgunItem;
+import io.github.mishkis.orbital_railgun.network.packets.ShootPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
@@ -43,11 +44,7 @@ public class MinecraftClientMixin {
                 OrbitalRailgunShader.INSTANCE.BlockPosition = blockHitResult.getBlockPos().toCenterPos().toVector3f();
                 OrbitalRailgunShader.INSTANCE.Dimension = player.getWorld().getRegistryKey();
 
-                PacketByteBuf buf = PacketByteBufs.create();
-                buf.writeItemStack(orbitalRailgun.getDefaultStack());
-                buf.writeBlockPos(blockHitResult.getBlockPos());
-
-                ClientPlayNetworking.send(OrbitalRailgun.SHOOT_PACKET_ID, buf);
+                ClientPlayNetworking.send(new ShootPayload(orbitalRailgun.getDefaultStack(), blockHitResult.getBlockPos()));
             }
         }
     }

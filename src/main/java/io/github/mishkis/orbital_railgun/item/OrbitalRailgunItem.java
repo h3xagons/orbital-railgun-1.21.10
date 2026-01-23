@@ -1,41 +1,48 @@
 package io.github.mishkis.orbital_railgun.item;
 
-import io.github.mishkis.orbital_railgun.OrbitalRailgun;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import com.google.common.base.Suppliers;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsage;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CooldownUpdateS2CPacket;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.mutable.MutableObject;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.client.RenderProvider;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class OrbitalRailgunItem extends Item implements GeoItem {
     private final AnimatableInstanceCache CACHE = GeckoLibUtil.createInstanceCache(this);
-    private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
-    public final MutableObject<RenderProvider> renderProviderHolder = new MutableObject<>();
+    private final Supplier<Object> renderProvider = makeRenderer(this);
+    public final MutableObject<GeoRenderProvider> renderProviderHolder = new MutableObject<>();
 
     public OrbitalRailgunItem() {
-        super(new FabricItemSettings().rarity(Rarity.EPIC).maxCount(1));
+        super(new Item.Settings().rarity(Rarity.EPIC).maxCount(1));
+    }
+
+    static Supplier<Object> makeRenderer(GeoItem item) {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER)
+            return () -> null;
+
+        return Suppliers.memoize(() -> {
+            AtomicReference<Object> renderProvider = new AtomicReference<>();
+            item.createGeoRenderer(renderProvider::set);
+            return renderProvider.get();
+        });
     }
 
     @Override
-    public int getMaxUseTime(ItemStack stack) {
+    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
         return 24000;
     }
 
@@ -58,7 +65,7 @@ public class OrbitalRailgunItem extends Item implements GeoItem {
     }
 
     @Override
-    public void createRenderer(Consumer<Object> consumer) {
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(this.renderProviderHolder.getValue());
     }
 
@@ -68,7 +75,9 @@ public class OrbitalRailgunItem extends Item implements GeoItem {
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {}
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+
+    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {

@@ -15,6 +15,8 @@ public class MouseMixin {
 
     @ModifyExpressionValue(method = "updateMouse", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingSpyglass()Z"))
     public boolean smoothCursorOnAim(boolean original) {
-        return original || this.client.player.getActiveItem().getItem() instanceof OrbitalRailgunItem;
+        if (original) return true;
+        assert this.client.player != null;
+        return this.client.player.getActiveItem().getItem() instanceof OrbitalRailgunItem;
     }
 }
